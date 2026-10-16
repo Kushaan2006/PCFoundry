@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body class="auth-page">
+
+    <div class="auth-card">
+      <h2>Create Account</h2>
+      <p class="auth-subtext">Make your account to save builds and manage your cart.</p>
+
+      {% if message %}
+        <p class="auth-message">{{ message }}</p>
+      {% endif %}
+
+      <form method="post" action="/register" class="auth-form">
+        <input type="text" name="name" placeholder="Full Name" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">Register</button>
+      </form>
+
+      <p class="auth-switch-text">
+        Already have an account?
+        <a href="/login">Login</a>
+      </p>
+
+      <a href="/" class="auth-back-link">← Back to Home</a>
+    </div>
+
+  </body>
+</html>

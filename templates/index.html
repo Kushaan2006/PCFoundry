@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+
+    <div class="nav-links">
+  <a href="/">Home</a>
+  <a href="/builder">PC Builder</a>
+  <a href="/presets">Preset Builds</a>
+  <a href="/cart">View Cart</a>
+  <a href="/login">Login</a>
+  <a href="/register">Register</a>
+  {% if session.get("user_name") %}
+    <span>Logged in as {{ session.get("user_name") }}</span>
+    <a href="/logout">Logout</a>
+  {% endif %}
+</div>
+
+    <h2>All Components</h2>
+
+    <form method="get" action="/">
+      <input type="text" name="name" placeholder="Search by name" value="{{ name }}">
+
+      <select name="type">
+        <option value="">-- Select Type --</option>
+        <option value="cpu" {% if product_type == "cpu" %}selected{% endif %}>CPU</option>
+        <option value="gpu" {% if product_type == "gpu" %}selected{% endif %}>GPU</option>
+        <option value="case" {% if product_type == "case" %}selected{% endif %}>Case</option>
+        <option value="cooler" {% if product_type == "cooler" %}selected{% endif %}>Cooler</option>
+        <option value="ram" {% if product_type == "ram" %}selected{% endif %}>RAM</option>
+        <option value="psu" {% if product_type == "psu" %}selected{% endif %}>Power Supply</option>
+        <option value="motherboard" {% if product_type == "motherboard" %}selected{% endif %}>Motherboard</option>
+        <option value="storage" {% if product_type == "storage" %}selected{% endif %}>Storage</option>
+      </select>
+
+      <input type="text" name="brand" placeholder="Brand" value="{{ brand }}">
+      <input type="number" name="min_price" placeholder="Min Price" value="{{ min_price }}">
+      <input type="number" name="max_price" placeholder="Max Price" value="{{ max_price }}">
+
+      <button type="submit">Search</button>
+    </form>
+
+    <br><hr>
+
+    {% if searched %}
+      <h3>Search Results</h3>
+    {% endif %}
+
+    {% if products %}
+      <div class="search-results">
+        {% for product in products %}
+          <div class="component-card">
+            <h3>{{ product["name"] }}</h3>
+            <p class="component-meta"><strong>Type:</strong> {{ product["type"] }}</p>
+            <p class="component-meta"><strong>Brand:</strong> {{ product["brand"] }}</p>
+            <p class="component-meta"><strong>Price:</strong> ${{ "%.2f"|format(product["price"]) }}</p>
+            <p class="component-meta"><strong>Stock:</strong> {{ product["stock"] }}</p>
+
+            <form method="post" action="/add_to_cart">
+              <input type="hidden" name="name" value="{{ product['name'] }}">
+              <button type="submit">Add to Cart</button>
+            </form>
+
+            <div class="component-specs">
+              <p class="component-meta"><strong>Specs:</strong></p>
+              {% for key, value in product["specs"].items() %}
+                <p class="component-meta">{{ key }}: {{ value }}</p>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-state">No products found.</p>
+    {% endif %}
+
+  </body>
+</html>

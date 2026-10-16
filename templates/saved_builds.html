@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/builder">PC Builder</a>
+      <a href="/saved_builds">Saved Builds</a>
+      <a href="/cart">View Cart</a>
+      <a href="/login">Login</a>
+      <a href="/register">Register</a>
+      {% if session.get("user_name") %}
+        <span>Logged in as {{ session.get("user_name") }}</span>
+        <a href="/logout">Logout</a>
+      {% endif %}
+    </div>
+
+    <h2>Saved Builds</h2>
+
+    {% if builds %}
+      {% for build in builds %}
+        <div class="component-card">
+          <h3>{{ build["build_name"] }}</h3>
+          <p>Total Price: ${{ "%.2f"|format(build["total_price"]) }}</p>
+
+          <div class="component-specs">
+            <p><strong>Selected Parts:</strong></p>
+            {% for key, value in build["parts"].items() %}
+              {% if value %}
+                <p>{{ key }} - {{ value }}</p>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <br>
+          <a href="/load_build/{{ loop.index0 }}">Modify This Build</a>
+        </div>
+        <hr>
+      {% endfor %}
+    {% else %}
+      <p>No saved builds yet.</p>
+    {% endif %}
+
+  </body>
+</html>

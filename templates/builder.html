@@ -1,0 +1,269 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+      .compatible { background-color: #4ccf6f; }
+      .incompatible { background-color: #ed5151; }
+      select { margin: 5px 0; padding: 5px; width: 250px; }
+      .component-group { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+      .component-group label { font-weight: bold; }
+    </style>
+  </head>
+  <body>
+
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/builder">PC Builder</a>
+      <a href="/saved_builds">Saved Builds</a>
+      <a href="/cart">View Cart</a>
+      <a href="/login">Login</a>
+      <a href="/register">Register</a>
+      {% if session.get("user_name") %}
+        <span>Logged in as {{ session.get("user_name") }}</span>
+        <a href="/logout">Logout</a>
+      {% endif %}
+    </div>
+
+    <h2>PC Builder</h2>
+
+    <form method="post" action="/add_build_to_cart">
+      <div class="component-group">
+        <label>Case:</label><br>
+        <select id="select_case" name="case">
+          <option value="" data-price="0">-- Select a case --</option>
+          {% for prod in cases %}
+          <option value="{{ prod['name'] }}" data-price="{{ prod['price'] }}"
+            {% if selected_build.get("case") == prod["name"] %}selected{% endif %}>
+            {{ prod["name"] }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="component-group">
+        <label>Motherboard:</label><br>
+        <select id="select_motherboard" name="motherboard">
+          <option value="" data-price="0">-- Select a motherboard --</option>
+          {% for prod in motherboards %}
+          <option value="{{ prod['name'] }}" data-price="{{ prod['price'] }}"
+            {% if selected_build.get("motherboard") == prod["name"] %}selected{% endif %}>
+            {{ prod["name"] }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="component-group">
+        <label>CPU:</label><br>
+        <select id="select_cpu" name="cpu">
+          <option value="" data-price="0">-- Select a CPU --</option>
+          {% for prod in cpus %}
+          <option value="{{ prod['name'] }}" data-price="{{ prod['price'] }}"
+            {% if selected_build.get("cpu") == prod["name"] %}selected{% endif %}>
+            {{ prod["name"] }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="component-group">
+        <label>CPU Cooler:</label><br>
+        <select id="select_cooler" name="cooler">
+          <option value="" data-price="0">-- Select a cooler --</option>
+          {% for prod in coolers %}
+          <option value="{{ prod['name'] }}" data-price="{{ prod['price'] }}"
+            {% if selected_build.get("cooler") == prod["name"] %}selected{% endif %}>
+            {{ prod["name"] }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="component-group">
+        <label>GPU:</label><br>
+        <select id="select_gpu" name="gpu">
+          <option value="" data-price="0">-- Select a GPU --</option>
+          {% for prod in gpus %}
+          <option value="{{ prod['name'] }}" data-price="{{ prod['price'] }}"
+            {% if selected_build.get("gpu") == prod["name"] %}selected{% endif %}>
+            {{ prod["name"] }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="component-group">
+        <label>RAM:</label><br>
+        <select id="select_ram" name="ram">
+          <option value="" data-price="0">-- Select RAM --</option>
+          {% for prod in rams %}
+          <option value="{{ prod['name'] }}" data-price="{{ prod['price'] }}"
+            {% if selected_build.get("ram") == prod["name"] %}selected{% endif %}>
+            {{ prod["name"] }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="component-group">
+        <label>Power Supply:</label><br>
+        <select id="select_psu" name="psu">
+          <option value="" data-price="0">-- Select a PSU --</option>
+          {% for prod in psus %}
+          <option value="{{ prod['name'] }}" data-price="{{ prod['price'] }}"
+            {% if selected_build.get("psu") == prod["name"] %}selected{% endif %}>
+            {{ prod["name"] }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <h3 id="builder_total">Build Total: $0.00</h3>
+
+      <button type="submit">Add Build to Cart</button>
+    </form>
+
+    {% if session.get("user_name") %}
+    <form method="post" action="/save_build">
+      <h3>Save This Build</h3>
+      <input type="text" name="build_name" placeholder="Build Name">
+
+      <input type="hidden" id="hidden_case" name="case">
+      <input type="hidden" id="hidden_motherboard" name="motherboard">
+      <input type="hidden" id="hidden_cpu" name="cpu">
+      <input type="hidden" id="hidden_cooler" name="cooler">
+      <input type="hidden" id="hidden_gpu" name="gpu">
+      <input type="hidden" id="hidden_ram" name="ram">
+      <input type="hidden" id="hidden_psu" name="psu">
+
+      <button type="submit" onclick="copyBuildToHiddenInputs()">Save Build</button>
+    </form>
+    {% endif %}
+
+    <script>
+      //refers to the document elements
+      const caseDropdown = document.getElementById("select_case");
+      const motherboardDropdown = document.getElementById("select_motherboard");
+      const cpuDropdown = document.getElementById("select_cpu");
+      const coolerDropdown = document.getElementById("select_cooler");
+      const gpuDropdown = document.getElementById("select_gpu");
+      const ramDropdown = document.getElementById("select_ram");
+      const psuDropdown = document.getElementById("select_psu");
+      const builderTotal = document.getElementById("builder_total");
+
+      //Stores all dropdowns in an array for easier access
+      const allDropdowns = [
+        caseDropdown,
+        motherboardDropdown,
+        cpuDropdown,
+        coolerDropdown,
+        gpuDropdown,
+        ramDropdown,
+        psuDropdown
+      ];
+
+      //function to calculate and update total build price
+      function updateBuilderTotal() {
+        let total = 0; //this would reflect the price of components in builder
+
+        //loops through each dropdown
+        allDropdowns.forEach(dropdown => {
+          const selectedOption = dropdown.options[dropdown.selectedIndex];
+          const price = parseFloat(selectedOption.getAttribute("data-price")) || 0; //gets price from mongodb db
+          total += price; //adds price of each component
+        });
+
+        //updates ui text with total price upto 2 decimal places
+        builderTotal.textContent = "Build Total: $" + total.toFixed(2);
+      }
+
+      //Function to copy selected dropdown dropdown values into hidden inputs
+
+      function copyBuildToHiddenInputs() {
+        document.getElementById("hidden_case").value = caseDropdown.value;
+        document.getElementById("hidden_motherboard").value = motherboardDropdown.value;
+        document.getElementById("hidden_cpu").value = cpuDropdown.value;
+        document.getElementById("hidden_cooler").value = coolerDropdown.value;
+        document.getElementById("hidden_gpu").value = gpuDropdown.value;
+        document.getElementById("hidden_ram").value = ramDropdown.value;
+        document.getElementById("hidden_psu").value = psuDropdown.value;
+      }
+
+      
+      //Checks compatability of selected components
+      function updateCompatability() {
+
+        //Create URL query parameters object
+        const params = new URLSearchParams();
+
+        //Add selected values to params only if they exists
+        if (caseDropdown.value) params.append('case', caseDropdown.value);
+        if (motherboardDropdown.value) params.append('motherboard', motherboardDropdown.value);
+        if (cpuDropdown.value) params.append('cpu', cpuDropdown.value);
+        if (coolerDropdown.value) params.append('cooler', coolerDropdown.value);
+        if (gpuDropdown.value) params.append('gpu', gpuDropdown.value);
+        if (ramDropdown.value) params.append('ram', ramDropdown.value);
+        if (psuDropdown.value) params.append('psu', psuDropdown.value);
+
+        //sends request to flask backent to check compatability with selected components
+        fetch(`/check_compatability?${params.toString()}`)
+          
+        .then(response => response.json()) //convert response to json
+          //Process compatability data returned from server
+          .then(data => {
+            updateDropdownColors('select_case', data.cases);
+            updateDropdownColors('select_motherboard', data.motherboards);
+            updateDropdownColors('select_cpu', data.cpus);
+            updateDropdownColors('select_cooler', data.coolers);
+            updateDropdownColors('select_gpu', data.gpus);
+            updateDropdownColors('select_ram', data.rams);
+            updateDropdownColors('select_psu', data.psus);
+          })
+          //error handling
+          .catch(error => console.error('Error fetching compatibility:', error));
+      }
+      
+      //function to update colors on dropdown that shows compatability status
+      function updateDropdownColors(dropdownId, compatibilityData) {
+        const dropdown = document.getElementById(dropdownId); //get elem by ID
+        if (!dropdown || !compatibilityData) return; // if dropdown doesnt exist, exit
+        
+        //get all options inside dropdown
+        const options = dropdown.options;
+
+        //loop through each option
+        for (let i = 0; i < options.length; i++) {
+          const optionValue = options[i].value; //get current option's value
+          if (!optionValue) continue;
+
+          //finds compatability info for this option
+          const compatItem = compatibilityData.find(item => item.name === optionValue);
+
+          //if compatability info exists
+          if (compatItem) {
+            //sets green if compattible
+            if (compatItem.compatible) {
+              options[i].className = "compatible";
+            } else { //sets red if incompatible
+              options[i].className = "incompatible";
+            }
+          }
+        }
+      }
+
+      //add event listener to each dropdown to detect change
+      allDropdowns.forEach(dropdown => {
+        dropdown.addEventListener("change", function() { //when change is detected
+          updateCompatability(); //recalculate compatability
+          updateBuilderTotal();//recalculate total price
+        });
+      });
+
+      //Run once when page loads to initialize values
+      updateBuilderTotal();
+      updateCompatability();
+    </script>
+
+  </body>
+</html>

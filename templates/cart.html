@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/builder">PC Builder</a>
+      <a href="/cart">View Cart</a>
+      <a href="/login">Login</a>
+      <a href="/register">Register</a>
+      {% if session.get("user_name") %}
+        <span>Logged in as {{ session.get("user_name") }}</span>
+        <a href="/logout">Logout</a>
+      {% endif %}
+    </div>
+
+    <h2>Your Cart</h2>
+
+    {% if cart %}
+      {% set ns = namespace(total=0) %}
+
+      {% for item in cart %}
+        {% set ns.total = ns.total + item["price"] %}
+
+        <div class="component-card">
+          <p><strong>{{ item["name"] }}</strong></p>
+
+          {% if item["type"] == "custom_build" %}
+            <p>Total Price: ${{ "%.2f"|format(item["price"]) }}</p>
+            <div class="component-specs">
+              <p><strong>Selected Parts:</strong></p>
+              {% for part in item["parts"] %}
+                <p>
+                  {{ part["type"] }} - {{ part["name"] }} - ${{ "%.2f"|format(part["price"]) }}
+                </p>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p>Price: ${{ "%.2f"|format(item["price"]) }}</p>
+            <p>Type: {{ item["type"] }}</p>
+            <p>Brand: {{ item["brand"] }}</p>
+          {% endif %}
+        </div>
+        <hr />
+      {% endfor %}
+
+      <h3>Cart Total: ${{ "%.2f"|format(ns.total) }}</h3>
+
+    {% else %}
+      <p>Cart is empty</p>
+    {% endif %}
+  </body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/builder">PC Builder</a>
+      <a href="/presets">Preset Builds</a>
+      <a href="/saved_builds">Saved Builds</a>
+      <a href="/cart">View Cart</a>
+      <a href="/login">Login</a>
+      <a href="/register">Register</a>
+      {% if session.get("user_name") %}
+        <span>Logged in as {{ session.get("user_name") }}</span>
+        <a href="/logout">Logout</a>
+      {% endif %}
+    </div>
+
+    <h2>Preset Builds</h2>
+    <p>Choose from ready-made gaming and video editing systems.</p>
+
+    {% if preset_builds %}
+      <div class="search-results">
+        {% for build in preset_builds %}
+          <div class="component-card">
+            <h3>{{ build["title"] }}</h3>
+            <p class="component-meta">{{ build["description"] }}</p>
+            <p class="component-meta"><strong>Total Price:</strong> ${{ "%.2f"|format(build["price"]) }}</p>
+
+            <div class="component-specs">
+              <p><strong>Included Parts:</strong></p>
+              {% for part in build["parts"] %}
+                <p class="component-meta">
+                  {{ part["type"] }} - {{ part["name"] }} - ${{ "%.2f"|format(part["price"]) }}
+                </p>
+              {% endfor %}
+            </div>
+
+            <br>
+
+            <form method="post" action="/add_preset_to_cart">
+              <input type="hidden" name="preset_key" value="{{ build['key'] }}">
+              <button type="submit">Add Preset to Cart</button>
+            </form>
+
+            <form method="get" action="/load_preset/{{ build['key'] }}">
+              <button type="submit">Load in Builder</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-state">No preset builds available.</p>
+    {% endif %}
+
+  </body>
+</html>
